@@ -18,6 +18,11 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import com.javabycode.springmvc.model.Student;
 import com.javabycode.springmvc.service.StudentService;
 
+import com.javabycode.springmvc.service.EmpleadoService;
+import com.javabycode.springmvc.model.Empleado;
+
+import com.javabycode.springmvc.model.Incidente;
+
 @Controller
 @RequestMapping("/")
 public class MyController {
@@ -27,11 +32,17 @@ public class MyController {
 	
 	@Autowired
 	MessageSource messageSource;
+	
+	@RequestMapping(value = { "/", "/menu" }, method = RequestMethod.GET)
+	public String menu(ModelMap model) {
+
+		return "menu";
+	}
 
 	/*
 	 * List all existing Students.
 	 */
-	@RequestMapping(value = { "/", "/list" }, method = RequestMethod.GET)
+	@RequestMapping(value = {"/list" }, method = RequestMethod.GET)
 	public String listStudents(ModelMap model) {
 
 		List<Student> students = service.findAllStudents();
@@ -69,7 +80,7 @@ public class MyController {
 		
 		service.saveStudent(student);
 
-		model.addAttribute("success", "Student " + student.getName() + " registered successfully");
+		model.addAttribute("success", "El proveedor " + student.getName() + " ha sido registrado exitosamente");
 		return "success";
 	}
 
@@ -104,7 +115,7 @@ public class MyController {
 
 		service.updateStudent(student);
 
-		model.addAttribute("success", "Student " + student.getName()	+ " updated successfully");
+		model.addAttribute("success", "El proveedor " + student.getName()	+ " ha sido actualizado exitosamente");
 		return "success";
 	}
 
@@ -116,6 +127,134 @@ public class MyController {
 	public String deleteStudent(@PathVariable String code) {
 		service.deleteStudentByCode(code);
 		return "redirect:/list";
+	}
+	
+	
+	// Controlador de empleado
+	
+	@Autowired
+	EmpleadoService serviceEmpleado;
+	
+
+	/*
+	 * List all existing Empleados.
+	 */
+	@RequestMapping(value = {"/list-empleados" }, method = RequestMethod.GET)
+	public String listEmpleados(ModelMap model) {
+
+		List<Empleado> empleados = serviceEmpleado.findAllEmpleados();
+		model.addAttribute("empleados", empleados);
+		return "allempleados";
+	}
+
+	/*
+	 * Add a new Empleado.
+	 */
+	@RequestMapping(value = { "/new-empleado" }, method = RequestMethod.GET)
+	public String newEmpleado(ModelMap model) {
+		Empleado empleado = new Empleado();
+		model.addAttribute("empleado", empleado);
+		model.addAttribute("edit", false);
+		return "registrationempleados";
+	}
+
+	/*
+	 * Handling POST request for validating the user input and saving Empleado in database.
+	 */
+	@RequestMapping(value = { "/new-empleado" }, method = RequestMethod.POST)
+	public String saveEmpleado(@Valid Empleado empleado, BindingResult result,
+			ModelMap model) {
+
+		if (result.hasErrors()) {
+			return "registrationempleados";
+		}
+		
+		System.out.println(result);
+		
+		/*if(!service.isEmpleadoCodeUnique(empleado.getId(), empleado.getId())){
+			FieldError codeError =new FieldError("Empleado","code",messageSource.getMessage("non.unique.code", new String[]{empleado.getId()}, Locale.getDefault()));
+		    result.addError(codeError);
+			return "registration";
+		}*/
+		
+		serviceEmpleado.saveEmpleado(empleado);
+
+		model.addAttribute("success", "Empleado " + empleado.getNombres() + " registered successfully");
+		return "success";
+	}
+
+
+	/*
+	 * Provide the existing Empleado for updating.
+	 */
+	@RequestMapping(value = { "/edit-{id}-empleado" }, method = RequestMethod.GET)
+	public String editEmpleado(@PathVariable String code, ModelMap model) {
+		Student student = service.findStudentByCode(code);
+		model.addAttribute("student", student);
+		model.addAttribute("edit", true);
+		return "registration";
+	}
+	
+	/*
+	 * Handling POST request for validating the user input and updating Empleado in database.
+	 */
+	@RequestMapping(value = { "/edit-{code}-empleado" }, method = RequestMethod.POST)
+	public String updateEmpleado(@Valid Empleado empleado, BindingResult result,
+			ModelMap model, @PathVariable String code) {
+
+		if (result.hasErrors()) {
+			return "registration";
+		}
+
+		if(!serviceEmpleado.isEmpleadoCodeUnique(empleado.getId(), empleado.getNombres())){
+			FieldError codeError =new FieldError("Empleado","code",messageSource.getMessage("non.unique.code", new String[]{empleado.getNombres()}, Locale.getDefault()));
+		    result.addError(codeError);
+			return "registration";
+		}
+
+		serviceEmpleado.updateEmpleado(empleado);
+
+		model.addAttribute("success", "Empleado " + empleado.getNombres()	+ " updated successfully");
+		return "success";
+	}
+
+	
+	/*
+	 * Delete an Student by it's CODE value.
+	 */
+	@RequestMapping(value = { "/delete-{code}-empleado" }, method = RequestMethod.GET)
+	public String deleteEmpleado(@PathVariable String code) {
+		serviceEmpleado.deleteEmpleadoByCode(code);
+		return "redirect:/list-empleados";
+	}
+	
+	
+	// Menu principal para agregar navegacion a las vistas
+	
+	@RequestMapping(value = {"/new-incidente" }, method = RequestMethod.GET)
+	public String incidente(ModelMap model) {
+		Incidente incidente = new Incidente();
+		model.addAttribute("incidente", incidente);
+		model.addAttribute("edit", false);
+		return "registrationincidentes";
+	}
+	
+	@RequestMapping(value = {"/new-leccion" }, method = RequestMethod.GET)
+	public String leccion(ModelMap model) {
+
+		return "registrationlecciones";
+	}
+	
+	@RequestMapping(value = {"/new-notificacion" }, method = RequestMethod.GET)
+	public String notificacion(ModelMap model) {
+
+		return "registrationnotificaciones";
+	}
+	
+	@RequestMapping(value = {"/new-chat" }, method = RequestMethod.GET)
+	public String chat(ModelMap model) {
+
+		return "registrationchat";
 	}
 
 }
